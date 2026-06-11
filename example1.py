@@ -1,5 +1,6 @@
 import csv
 import datetime as dt
+import re
 
 ### Parameters / Constant Values
 
@@ -11,17 +12,19 @@ DATA_OUT = "data/out.csv"
 
 EXCEPTIONS = ["", "1/1/9999"]
 
+CMMRD = re.compile("CMMRD", re.IGNORECASE)
+
 ### Existing Keys
 
 DOC_1 = "DOC"
 DOC_2 = "DateCollected"
-MMR_1 = "TissueID"
-MMR_2 = "TissueID"
+MMR = "TissueID"
+STATUS = "Status"
 
 ### New Keys
 
-COL = "1_DateOfCollection"
 ID = "0_PatientID"
+COL = "1_DateOfCollection"
 
 ### Utility Functions
 
@@ -45,7 +48,7 @@ def read_spreadsheet(file: str) -> list[dict]:
         # For each row on sheet
         for row in reader:
             # Convert MMR to friendly ID
-            row[ID] = mmr_to_patient(row.get(MMR_1) or row.get(MMR_2) or "")
+            row[ID] = mmr_to_patient(row[MMR])
 
             # Convert string to date
             if not DOC_1 in row and not DOC_2 in row:
@@ -124,10 +127,12 @@ print(f"Unique collects by patient and date: {len(unique_collections)}")
 
 # Find only patients with multiple values
 patient_counts = count_values([d[ID] for d in unique_collections])
+
 # Remove values from list which patient id does not appear multiple times
-unique_collections = list(
-    filter(lambda d: patient_counts[d[ID]] > 1, unique_collections)
-)
+# Remove values from non CMMRD patients
+condition = lambda d: patient_counts[d[ID]] > 1 and CMMRD.match(d[STATUS])
+
+unique_collections = list(filter(condition, unique_collections))
 
 # Write
 write_spreadsheet(DATA_OUT, unique_collections)
