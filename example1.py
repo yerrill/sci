@@ -68,6 +68,7 @@ def read_spreadsheet(file: str) -> list[dict]:
 
 def write_spreadsheet(file: str, data: list[dict]):
     """Write spreadsheet"""
+    # Get all headers from the dataset
     headers = set()
     for row in data:
         headers.update(row.keys())
@@ -75,18 +76,26 @@ def write_spreadsheet(file: str, data: list[dict]):
     headers = list(headers)
     headers.sort()
 
+    # Open file
     with open(file, "w", newline="") as csvfile:
+        # CSV writer
         writer = csv.DictWriter(csvfile, fieldnames=headers)
+        # Write header
         writer.writeheader()
 
+        # Write each row
         for row in data:
             writer.writerow(row)
 
 
 def count_values(data: list[str]) -> dict[str, int]:
     """Convert list of values into map of items to count"""
+    # Create map
     counts = {}
+
+    # For each row
     for value in data:
+        # Create entry or add 1 to existing count
         if value in counts:
             counts[value] += 1
         else:
@@ -115,6 +124,7 @@ print(f"Unique collects by patient and date: {len(unique_collections)}")
 
 # Find only patients with multiple values
 patient_counts = count_values([d[ID] for d in unique_collections])
+# Remove values from list which patient id does not appear multiple times
 unique_collections = list(
     filter(lambda d: patient_counts[d[ID]] > 1, unique_collections)
 )
